@@ -1,5 +1,4 @@
 from itertools import product
-from pprint import pprint
 from re import match
 
 class BayesianNetwork:
@@ -23,11 +22,10 @@ class BayesianNetwork:
             self.tablasDeProbabilidades = self.fromString(tablasDeProbabilidades)
         else:
             raise TypeError
-        pprint(self.tablasDeProbabilidades)
 
         self.dependencias = {}
-        for inputVariablesConValores, (outputVariable, _) in self.tablasDeProbabilidades:
-            inputVariables = [variable for variable, valor in inputVariablesConValores]
+        for (inputVariablesConValores, (outputVariable, outputValor)), probabilidad in list(self.tablasDeProbabilidades.items()):
+            inputVariables = [variable for variable, _ in inputVariablesConValores]
 
             if outputVariable in self.dependencias:
                 assert(self.dependencias[outputVariable] == inputVariables)
@@ -35,11 +33,16 @@ class BayesianNetwork:
             else:
                 self.dependencias[outputVariable] = inputVariables
 
+            # Inferencias
+            self.tablasDeProbabilidades[(inputVariablesConValores, (outputVariable, not outputValor))] = 1 - probabilidad 
+
     def fromString(self, string):
         renglones = string.split('\n')
-        tablasDeProbabilidades = {}                         # x, no w, y, 0.5
-        for renglon in renglones:                           # 0.5 
-            temp = [t.strip() for t in renglon.split(',')]                    # y
+        tablasDeProbabilidades = {}                         
+        for renglon in renglones:                           
+            if not renglon.strip():
+                continue
+            temp = [t.strip() for t in renglon.split(',')]                    
             probabilidad = float(temp[-1])
             outputVariableConValor = self.variableConValorFromString(temp[-2])
 
@@ -90,82 +93,86 @@ class BayesianNetwork:
 
         return resultado
 
-tablaAlarma = {
-    # Robo
-    (
-        (), 
-        ('r', 1)) : 0.001,
-    (
-        (), 
-        ('r', 0)) : 0.999,
-    # Temblor
-    (
-        (), 
-        ('t', 1)) : 0.002,
-    (
-        (), 
-        ('t', 0)) : 0.998,
-    # Alarma
-    (
-        (('r', 1), ('t', 1)), 
-        ('a', 1))   : 0.95,
-    (
-        (('r', 1), ('t', 0)), 
-        ('a', 1))  : 0.94,
-    (
-        (('r', 0), ('t', 1)), 
-        ('a', 1))  : 0.290,
-    (
-        (('r', 0), ('t', 0)), 
-        ('a', 1)) : 0.001,
-    (
-        (('r', 1), ('t', 1)), 
-        ('a', 0))   : 0.050,
-    (
-        (('r', 1), ('t', 0)), 
-        ('a', 0))  : 0.051,
-    (
-        (('r', 0), ('t', 1)), 
-        ('a', 0))  : 0.71,
-    (
-        (('r', 0), ('t', 0)), 
-        ('a', 0)) : 0.999,
-    # Juan
-    (
-        (('a', 1),), 
-        ('j', 1)) : 0.90,
-    (
-        (('a', 0),), 
-        ('j', 1)) : 0.05,
-    (
-        (('a', 1),),
-         ('j', 0)) : 0.10,
-    (
-        (('a', 0),), 
-        ('j', 0)) : 0.95,
-    # Maria
-    (
-        (('a', 1),), 
-        ('m', 1)) : 0.70,
-    (
-        (('a', 0),), 
-        ('m', 1)) : 0.01,
-    (
-        (('a', 1),),
-         ('m', 0)) : 0.30,
-    (
-        (('a', 0),), 
-        ('m', 0)) : 0.99,
-}
+def aprox(numero1, numero2, epsilon):
+    return abs(numero1 - numero2) < epsilon
 
-#red = BayesianNetwork(['r', 't', 'a', 'j', 'm'], tablaAlarma)
+if __name__ == '__main__':
+    tablaAlarma = {
+        # Robo
+        (
+            (), 
+            ('r', 1)) : 0.001,
+        (
+            (), 
+            ('r', 0)) : 0.999,
+        # Temblor
+        (
+            (), 
+            ('t', 1)) : 0.002,
+        (
+            (), 
+            ('t', 0)) : 0.998,
+        # Alarma
+        (
+            (('r', 1), ('t', 1)), 
+            ('a', 1))   : 0.95,
+        (
+            (('r', 1), ('t', 0)), 
+            ('a', 1))  : 0.94,
+        (
+            (('r', 0), ('t', 1)), 
+            ('a', 1))  : 0.290,
+        (
+            (('r', 0), ('t', 0)), 
+            ('a', 1)) : 0.001,
+        (
+            (('r', 1), ('t', 1)), 
+            ('a', 0))   : 0.050,
+        (
+            (('r', 1), ('t', 0)), 
+            ('a', 0))  : 0.051,
+        (
+            (('r', 0), ('t', 1)), 
+            ('a', 0))  : 0.71,
+        (
+            (('r', 0), ('t', 0)), 
+            ('a', 0)) : 0.999,
+        # Juan
+        (
+            (('a', 1),), 
+            ('j', 1)) : 0.90,
+        (
+            (('a', 0),), 
+            ('j', 1)) : 0.05,
+        (
+            (('a', 1),),
+            ('j', 0)) : 0.10,
+        (
+            (('a', 0),), 
+            ('j', 0)) : 0.95,
+        # Maria
+        (
+            (('a', 1),), 
+            ('m', 1)) : 0.70,
+        (
+            (('a', 0),), 
+            ('m', 1)) : 0.01,
+        (
+            (('a', 1),),
+            ('m', 0)) : 0.30,
+        (
+            (('a', 0),), 
+            ('m', 0)) : 0.99,
+    }
 
-nombreArchivo = 'red.txt' 
-archivo = open(nombreArchivo, 'r')
-redString = archivo.read()
+    red = BayesianNetwork(['r', 't', 'a', 'j', 'm'], tablaAlarma)
+    assert(aprox(red.probabilidadDeInstancia({'j': 1}), 0.0521, 0.0001))
 
-red = BayesianNetwork(['r', 't', 'a', 'j', 'm'], redString)
 
-print(red.probabilidadDeInstancia({'j': 1}))
+    nombreArchivo = 'red.txt' 
+    with open(nombreArchivo, 'r') as archivo:
+        redString = archivo.read()
 
-# valor 0,521
+    red = BayesianNetwork(['r', 't', 'a', 'j', 'm'], redString)
+
+    assert(aprox(red.probabilidadDeInstancia({'j': 1}), 0.0521, 0.0001))
