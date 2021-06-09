@@ -34,5 +34,13 @@ class BayesianNetwork:
         instancia: 
             ejemplo: {'a': True, 'b': False, ...]
         """
+        resultado = 1
+        
         for nodo, valor in instancia.values():
-            dependencias = self.dependencias[nodo]
+            dependencias = self.dependencias[nodo] 
+            dependenciasConValores = ((nodoDependencia, instancia[nodoDependencia]) for nodoDependencia in dependencias)
+            query = (dependenciasConValores, (nodo, valor))
+            probabildad = self.tablasDeProbabilidades[query]
+            resultado *= probabildad
+
+        return resultado
