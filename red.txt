@@ -1,10 +1,10 @@
-r, 0.001
-t, 0.002
-r, no t, a, 0.94
-no r, t, a, 0.29
-r, t, no a, 0.05
-no r, no t, no a, 0.999
-a, j, 0.9
-no a, j, 0.05
-no a, m, 0.01
-a, no m, 0.3
+                    r,      0.001
+                    t,      0.002
+r,      no t,       a,      0.94
+no r,   t,          a,      0.29
+r,      t,          no a,   0.05
+no r,   no t,       no a,   0.999
+a,                  j,      0.9
+no a,               j,      0.05
+no a,               m,      0.01
+a,                  no m,   0.3
