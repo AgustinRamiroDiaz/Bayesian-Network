@@ -1,5 +1,6 @@
 from itertools import product
 from pprint import pprint
+from re import match
 
 class BayesianNetwork:
     def __init__(self, nodos, tablasDeProbabilidades) -> None:
@@ -16,9 +17,16 @@ class BayesianNetwork:
                     }
         """
         self.nodos = nodos
-        self.tablasDeProbabilidades = tablasDeProbabilidades
+        if type(tablasDeProbabilidades) == dict:
+            self.tablasDeProbabilidades = tablasDeProbabilidades
+        elif type(tablasDeProbabilidades) == str:
+            self.tablasDeProbabilidades = self.fromString(tablasDeProbabilidades)
+        else:
+            raise TypeError
+        pprint(self.tablasDeProbabilidades)
+
         self.dependencias = {}
-        for inputVariablesConValores, (outputVariable, _) in tablasDeProbabilidades:
+        for inputVariablesConValores, (outputVariable, _) in self.tablasDeProbabilidades:
             inputVariables = [variable for variable, valor in inputVariablesConValores]
 
             if outputVariable in self.dependencias:
@@ -27,6 +35,25 @@ class BayesianNetwork:
             else:
                 self.dependencias[outputVariable] = inputVariables
 
+    def fromString(self, string):
+        renglones = string.split('\n')
+        tablasDeProbabilidades = {}                         # x, no w, y, 0.5
+        for renglon in renglones:                           # 0.5 
+            temp = [t.strip() for t in renglon.split(',')]                    # y
+            probabilidad = float(temp[-1])
+            outputVariableConValor = self.variableConValorFromString(temp[-2])
+
+            inputVariablesConValor = tuple(self.variableConValorFromString(inputVariableConValor) for inputVariableConValor in temp[:-2])
+
+            tablasDeProbabilidades[(inputVariablesConValor, outputVariableConValor)] = probabilidad
+
+        return tablasDeProbabilidades
+
+    def variableConValorFromString(self, string):
+        if match('no ', string):
+                return (string[3:], False)
+        else:
+            return (string, True)
 
     def probabilidadDeInstanciaCompleta(self, instancia):
         """
@@ -81,7 +108,7 @@ tablaAlarma = {
     # Alarma
     (
         (('r', 1), ('t', 1)), 
-        ('a', 1))   : 0.950,
+        ('a', 1))   : 0.95,
     (
         (('r', 1), ('t', 0)), 
         ('a', 1))  : 0.94,
@@ -99,7 +126,7 @@ tablaAlarma = {
         ('a', 0))  : 0.051,
     (
         (('r', 0), ('t', 1)), 
-        ('a', 0))  : 0.710,
+        ('a', 0))  : 0.71,
     (
         (('r', 0), ('t', 0)), 
         ('a', 0)) : 0.999,
@@ -131,6 +158,14 @@ tablaAlarma = {
         ('m', 0)) : 0.99,
 }
 
-red = BayesianNetwork(['r', 't', 'a', 'j', 'm'], tablaAlarma)
+#red = BayesianNetwork(['r', 't', 'a', 'j', 'm'], tablaAlarma)
+
+nombreArchivo = 'red.txt' 
+archivo = open(nombreArchivo, 'r')
+redString = archivo.read()
+
+red = BayesianNetwork(['r', 't', 'a', 'j', 'm'], redString)
 
 print(red.probabilidadDeInstancia({'j': 1}))
+
+# valor 0,521
