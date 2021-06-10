@@ -28,14 +28,13 @@ class BayesianNetwork:
             self.tablasDeProbabilidades = self.tablasDeProbabilidadesFromString(
                 tablasDeProbabilidades)
         else:
-            raise TypeError
+            raise TypeError("Los tipos soportados para la variable tablasDeProbabilidades son dict y string")
 
     def inferirNodos(self):
-        self.nodos = []
+        self.nodos = set()
         for inputVariablesConValores, (outputVariable, _) in self.tablasDeProbabilidades:
             for nodo, _ in inputVariablesConValores + ((outputVariable, None),):
-                if nodo not in self.nodos:
-                    self.nodos.append(nodo)
+                self.nodos.add(nodo)
 
     def inferirRegistrosDeTablasDeProbabilidades(self):
         for (inputVariablesConValores, (outputVariable, outputValor)), probabilidad in list(self.tablasDeProbabilidades.items()):
