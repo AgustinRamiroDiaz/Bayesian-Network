@@ -33,7 +33,7 @@ class BayesianNetwork:
     def inferirNodos(self):
         self.nodos = set()
         for inputVariablesConValores, (outputVariable, _) in self.tablasDeProbabilidades:
-            for nodo, _ in inputVariablesConValores + ((outputVariable, None),):
+            for nodo, _ in inputVariablesConValores + ((outputVariable, _),):
                 self.nodos.add(nodo)
 
     def inferirRegistrosDeTablasDeProbabilidades(self):
