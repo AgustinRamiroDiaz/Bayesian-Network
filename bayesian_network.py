@@ -28,7 +28,8 @@ class BayesianNetwork:
             self.tablasDeProbabilidades = self.tablasDeProbabilidadesFromString(
                 tablasDeProbabilidades)
         else:
-            raise TypeError("Los tipos soportados para la variable tablasDeProbabilidades son dict y string")
+            raise TypeError(
+                "Los tipos soportados para la variable tablasDeProbabilidades son dict y string")
 
     def inferirNodos(self):
         self.nodos = set()
@@ -44,8 +45,8 @@ class BayesianNetwork:
     def generarDependencias(self):
         self.dependencias = {}
         for inputVariablesConValores, (outputVariable, _) in self.tablasDeProbabilidades:
-            inputVariables = [variable for variable,
-                              _ in inputVariablesConValores]
+            inputVariables = tuple(variable for variable,
+                                   _ in inputVariablesConValores)
 
             if outputVariable in self.dependencias:
                 assert(self.dependencias[outputVariable] == inputVariables)
@@ -53,17 +54,18 @@ class BayesianNetwork:
                 self.dependencias[outputVariable] = inputVariables
 
     def tablasDeProbabilidadesFromString(self, string):
-        renglones = string.split('\n')
         tablasDeProbabilidades = {}
+        renglones = string.split('\n')
         for renglon in renglones:
             if not renglon.strip():
                 continue
-            temp = [t.strip() for t in renglon.split(',')]
-            probabilidad = float(temp[-1])
-            outputVariableConValor = self.variableConValorFromString(temp[-2])
+            renglonSplitted = [input.strip() for input in renglon.split(',')]
+            probabilidad = float(renglonSplitted[-1])
+            outputVariableConValor = self.variableConValorFromString(
+                renglonSplitted[-2])
 
             inputVariablesConValor = tuple(self.variableConValorFromString(
-                inputVariableConValor) for inputVariableConValor in temp[:-2])
+                inputVariableConValor) for inputVariableConValor in renglonSplitted[:-2])
 
             tablasDeProbabilidades[(
                 inputVariablesConValor, outputVariableConValor)] = probabilidad
@@ -71,7 +73,7 @@ class BayesianNetwork:
         return tablasDeProbabilidades
 
     def variableConValorFromString(self, string):
-        if match('no ', string):
+        if match('^no ', string):
             return (string[3:], False)
         else:
             return (string, True)
