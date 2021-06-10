@@ -1,5 +1,5 @@
 from itertools import product
-from re import match
+from re import match, search
 
 
 class BayesianNetwork:
@@ -115,7 +115,7 @@ class BayesianNetwork:
             product([False, True], repeat=len(nodosNoInstanciados)))
 
         print('P(' + ', '.join(
-                [f'{nodo} = {bool(valor)}' for nodo, valor in instancia.items()]) + ')')
+            [f'{nodo} = {bool(valor)}' for nodo, valor in instancia.items()]) + ')')
         log = []
         instanciasCompletas = []
         for registroDeVerdad in tablaDeVerdad:
@@ -130,7 +130,7 @@ class BayesianNetwork:
 
         print('= ' + ' + '.join(log), end='\n'*3)
         print('Cálculos auxiliares:')
-        
+
         resultado = 0
         for instanciaCompleta in instanciasCompletas:
             resultado += self._probabilidadDeInstanciaCompleta(
@@ -138,87 +138,75 @@ class BayesianNetwork:
 
         return resultado
 
+    def probabilidadCondicional(self, output, inputs):
+        # P(x|y) = P(x, y) / P(y)
+        Py = self.probabilidadDeInstancia(inputs)
+        inputs.update(output)
+        Pxy = self.probabilidadDeInstancia(inputs)
+        return Pxy / Py
 
-def aprox(numero1, numero2, epsilon):
-    return abs(numero1 - numero2) < epsilon
+    def calcular(self, string):
+        cleaned = search('\s*P\s*\(\s*(.*)\s*\)\s*', string).groups()[0]
+        splitted = cleaned.split('|')
+        if len(splitted) == 1: 
+            inputsDict = {}
+            for variableConValorString in cleaned.split(','):
+                variableConValorString = variableConValorString.strip()
+                variable, valor = self._variableConValorFromString(variableConValorString)
+                inputsDict[variable] = valor
+            
+            return self.probabilidadDeInstancia(inputsDict)
+
+        elif len(splitted) == 2:
+            output = splitted[0].strip()
+            inputs = splitted[1]
+
+            inputsDict = {}
+            for variableConValorString in inputs.split(','):
+                variableConValorString = variableConValorString.strip()
+                variable, valor = self._variableConValorFromString(variableConValorString)
+                inputsDict[variable] = valor
+            
+            outputVariable, outputValor = self._variableConValorFromString(output)
+            outputDict = {outputVariable : outputValor}
+
+            return self.probabilidadCondicional(outputDict , inputsDict)
+
+        else:
+            raise ValueError('Qué metiste?')
+
+def aprox(value, expected):
+    decimalPlacesLength = len(str(expected).split('.')[1])
+    epsilon = 10**-decimalPlacesLength
+    return abs(value - expected) < epsilon
 
 
 if __name__ == '__main__':
-    tablaAlarma = {
-        # Robo
-        (
-            (),
-            ('r', 1)): 0.001,
-        (
-            (),
-            ('r', 0)): 0.999,
-        # Temblor
-        (
-            (),
-            ('t', 1)): 0.002,
-        (
-            (),
-            ('t', 0)): 0.998,
-        # Alarma
-        (
-            (('r', 1), ('t', 1)),
-            ('a', 1)): 0.95,
-        (
-            (('r', 1), ('t', 0)),
-            ('a', 1)): 0.94,
-        (
-            (('r', 0), ('t', 1)),
-            ('a', 1)): 0.290,
-        (
-            (('r', 0), ('t', 0)),
-            ('a', 1)): 0.001,
-        (
-            (('r', 1), ('t', 1)),
-            ('a', 0)): 0.050,
-        (
-            (('r', 1), ('t', 0)),
-            ('a', 0)): 0.051,
-        (
-            (('r', 0), ('t', 1)),
-            ('a', 0)): 0.71,
-        (
-            (('r', 0), ('t', 0)),
-            ('a', 0)): 0.999,
-        # Juan
-        (
-            (('a', 1),),
-            ('j', 1)): 0.90,
-        (
-            (('a', 0),),
-            ('j', 1)): 0.05,
-        (
-            (('a', 1),),
-            ('j', 0)): 0.10,
-        (
-            (('a', 0),),
-            ('j', 0)): 0.95,
-        # Maria
-        (
-            (('a', 1),),
-            ('m', 1)): 0.70,
-        (
-            (('a', 0),),
-            ('m', 1)): 0.01,
-        (
-            (('a', 1),),
-            ('m', 0)): 0.30,
-        (
-            (('a', 0),),
-            ('m', 0)): 0.99,
-    }
+    tablas = """        d1, 0.002
+                        d2, 0.001
+    d1,                 s1, 0.7
+    no d1,              s1, 0.05
+    d1,     d2,         r,  0.5
+    d1,     no d2,      r,  0.5
+    no d1,  d2,         r,  0.5
+    no d1,  no d2,      r,  0
+    d1,     d2,         s2, 0.95
+    d1,     no d2,      s2, 0.2
+    no d1,  d2,         s2, 0.8
+    no d1,  no d2,      s2, 0.05"""
+    
+    red = BayesianNetwork(tablas)
 
-    red = BayesianNetwork(tablaAlarma)
-    assert(aprox(red.probabilidadDeInstancia({'j': 1}), 0.0521, 0.0001))
+    resultado = red.calcular('P(d1, no d2, s1, r, no s2)')
+    print(resultado)
+    assert(aprox(resultado, 0.00055944))
 
-    nombreArchivo = 'red.txt'
-    with open(nombreArchivo, 'r') as archivo:
-        redString = archivo.read()
+    resultado = red.calcular('P(d2 | no s1, r, s2)')
+    print(resultado)
+    assert(aprox(resultado, 0.863606886))
 
-    red = BayesianNetwork(redString)
+    resultado = red.calcular(' P ( d1 | no s1,      r,      s2 )')
+    print(resultado)
+    assert(aprox(resultado, 0.1370416302))
 
-    assert(aprox(red.probabilidadDeInstancia({'j': 1}), 0.0521, 0.0001))
+    print('Pasaron todos los tests!')
