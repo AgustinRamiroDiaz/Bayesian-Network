@@ -103,7 +103,7 @@ class BayesianNetwork:
 
         log = '\n='.join([conjuncion, logPrevio[3:],
                          logPosterior[3:], str(resultado)])
-        print(log)
+        print(log, end='\n'*2)
 
         return resultado
 
@@ -128,8 +128,9 @@ class BayesianNetwork:
                 [f'{nodo} = {bool(valor)}' for nodo, valor in instanciaCompleta.items()]) + ')'
             log.append(conjuncion)
 
-        print('= ' + ' + '.join(log), end='\n\n')
-
+        print('= ' + ' + '.join(log), end='\n'*3)
+        print('Cálculos auxiliares:')
+        
         resultado = 0
         for instanciaCompleta in instanciasCompletas:
             resultado += self._probabilidadDeInstanciaCompleta(
