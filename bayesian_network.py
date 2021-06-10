@@ -84,7 +84,8 @@ class BayesianNetwork:
             ejemplo: {'a': 1, 'b': 0, ...]
         """
         resultado = 1
-        conjuncion = 'P(' + ', '.join([f'{nodo} = {bool(valor)}' for nodo, valor in instancia.items()]) + ')'
+        conjuncion = 'P(' + ', '.join(
+            [f'{nodo} = {bool(valor)}' for nodo, valor in instancia.items()]) + ')'
         logPrevio = ''
         logPosterior = ''
 
@@ -94,13 +95,14 @@ class BayesianNetwork:
                 (nodoDependencia, instancia[nodoDependencia]) for nodoDependencia in dependencias)
             query = (dependenciasConValores, (nodo, valor))
 
-            
-            logPrevio += f' * P({nodo} = {bool(valor)}' + (' | '+ ', '.join([f'{nodo} = {bool(valor)}' for nodo, valor in dependenciasConValores]) if dependenciasConValores else '') + ')'
+            logPrevio += f' * P({nodo} = {bool(valor)}' + (' | ' + ', '.join(
+                [f'{nodo} = {bool(valor)}' for nodo, valor in dependenciasConValores]) if dependenciasConValores else '') + ')'
             probabildad = self.tablasDeProbabilidades[query]
             resultado *= probabildad
             logPosterior += f' * {probabildad}'
 
-        log = '\n='.join([conjuncion, logPrevio[3:], logPosterior[3:], str(resultado)])
+        log = '\n='.join([conjuncion, logPrevio[3:],
+                         logPosterior[3:], str(resultado)])
         print(log)
 
         return resultado
