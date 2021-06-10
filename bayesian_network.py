@@ -16,33 +16,33 @@ class BayesianNetwork:
                         ((), ('a', 0)) : 0,4
                     }
         """
-        self.asignarTablasDeProbabilidades(tablasDeProbabilidades)
-        self.inferirNodos()
-        self.generarDependencias()
-        self.inferirRegistrosDeTablasDeProbabilidades()
+        self._asignarTablasDeProbabilidades(tablasDeProbabilidades)
+        self._inferirNodos()
+        self._generarDependencias()
+        self._inferirRegistrosDeTablasDeProbabilidades()
 
-    def asignarTablasDeProbabilidades(self, tablasDeProbabilidades):
+    def _asignarTablasDeProbabilidades(self, tablasDeProbabilidades):
         if type(tablasDeProbabilidades) == dict:
             self.tablasDeProbabilidades = tablasDeProbabilidades
         elif type(tablasDeProbabilidades) == str:
-            self.tablasDeProbabilidades = self.tablasDeProbabilidadesFromString(
+            self.tablasDeProbabilidades = self._tablasDeProbabilidadesFromString(
                 tablasDeProbabilidades)
         else:
             raise TypeError(
                 "Los tipos soportados para la variable tablasDeProbabilidades son dict y string")
 
-    def inferirNodos(self):
+    def _inferirNodos(self):
         self.nodos = set()
         for inputVariablesConValores, (outputVariable, _) in self.tablasDeProbabilidades:
             for nodo, _ in inputVariablesConValores + ((outputVariable, _),):
                 self.nodos.add(nodo)
 
-    def inferirRegistrosDeTablasDeProbabilidades(self):
+    def _inferirRegistrosDeTablasDeProbabilidades(self):
         for (inputVariablesConValores, (outputVariable, outputValor)), probabilidad in list(self.tablasDeProbabilidades.items()):
             self.tablasDeProbabilidades[(
                 inputVariablesConValores, (outputVariable, not outputValor))] = 1 - probabilidad
 
-    def generarDependencias(self):
+    def _generarDependencias(self):
         self.dependencias = {}
         for inputVariablesConValores, (outputVariable, _) in self.tablasDeProbabilidades:
             inputVariables = tuple(variable for variable,
@@ -53,7 +53,7 @@ class BayesianNetwork:
             else:
                 self.dependencias[outputVariable] = inputVariables
 
-    def tablasDeProbabilidadesFromString(self, string):
+    def _tablasDeProbabilidadesFromString(self, string):
         tablasDeProbabilidades = {}
         renglones = string.split('\n')
         for renglon in renglones:
@@ -61,10 +61,10 @@ class BayesianNetwork:
                 continue
             renglonSplitted = [input.strip() for input in renglon.split(',')]
             probabilidad = float(renglonSplitted[-1])
-            outputVariableConValor = self.variableConValorFromString(
+            outputVariableConValor = self._variableConValorFromString(
                 renglonSplitted[-2])
 
-            inputVariablesConValor = tuple(self.variableConValorFromString(
+            inputVariablesConValor = tuple(self._variableConValorFromString(
                 inputVariableConValor) for inputVariableConValor in renglonSplitted[:-2])
 
             tablasDeProbabilidades[(
@@ -72,13 +72,13 @@ class BayesianNetwork:
 
         return tablasDeProbabilidades
 
-    def variableConValorFromString(self, string):
+    def _variableConValorFromString(self, string):
         if match('^no ', string):
             return (string[3:], False)
         else:
             return (string, True)
 
-    def probabilidadDeInstanciaCompleta(self, instancia):
+    def _probabilidadDeInstanciaCompleta(self, instancia):
         """
         instancia: 
             ejemplo: {'a': 1, 'b': 0, ...]
@@ -114,6 +114,9 @@ class BayesianNetwork:
         tablaDeVerdad = list(
             product([False, True], repeat=len(nodosNoInstanciados)))
 
+        print('P(' + ', '.join(
+                [f'{nodo} = {bool(valor)}' for nodo, valor in instancia.items()]) + ')')
+        log = []
         instanciasCompletas = []
         for registroDeVerdad in tablaDeVerdad:
             instanciaCompleta = instancia.copy()
@@ -121,10 +124,15 @@ class BayesianNetwork:
                 instanciaCompleta[nodo] = valor
 
             instanciasCompletas.append(instanciaCompleta)
+            conjuncion = 'P(' + ', '.join(
+                [f'{nodo} = {bool(valor)}' for nodo, valor in instanciaCompleta.items()]) + ')'
+            log.append(conjuncion)
+
+        print('= ' + ' + '.join(log), end='\n\n')
 
         resultado = 0
         for instanciaCompleta in instanciasCompletas:
-            resultado += self.probabilidadDeInstanciaCompleta(
+            resultado += self._probabilidadDeInstanciaCompleta(
                 instanciaCompleta)
 
         return resultado
